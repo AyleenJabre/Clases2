@@ -4,34 +4,45 @@
 ## Program: Master in Business Analytics
 ## Institution: Universidad Adolfo Ibáñez
 
+# Desde el MINUTO 1:35:38 Empieza la clase 3.
 
 #---- Part 1: Data Management  -------------------
 
-# Reading an exporting data
+# 1.- Reading an exporting data
 
 library(readxl)
 library(data.table)
 
-
-
 casos<-data.table(read_excel("Class_02/2020-03-17-Casos-confirmados.xlsx",na = "—",trim_ws = TRUE,col_names = TRUE),stringsAsFactors = FALSE)
-
 names(casos)
+
+#  Los casos se pueden preguntar de dos manera para saber cómo está escrito en la base de datos 
+casos[,table(Región)]
+casos[,.N,by=(Región)]
+
 casos<-casos[Región=="Metropolitana",]
 
-saveRDS(casos,"Class_03/casosRM.rds")
+saveRDS(casos,"Class_03/casosRM.rds") #Forma de guardar datos. File = Path dónde uno quiere guardar los datos 
 
-write.csv(casos,file = 'Class_03/CasosCovid_RM.csv',fileEncoding = 'UTF-8')
+# csv es el tipo de archivo más recomendado y es el más liviano. 
 
-writexl::write_xlsx(casos,path = "Class_03/CasosenExcel.xlsx")
+write.csv(casos,file = 'Class_03/CasosCovid_RM.csv',fileEncoding = 'UTF-8') #Esto también es para guardar la base de datos
+ 
+install.packages("writexl")
+
+writexl::write_xlsx(casos,path = "Class_03/CasosenExcel.xlsx") #Los dos puntos sirven para entrar dentro de otra función. Escribir una excel y tirar otro 
 
 library(foreign)
 
 write.dta
 
-
+# FREAD - Rápida para leer cuando tenemos mucho datos, se puede seleccionar los datos que queremos 
 
 casosRM<-fread("Class_03/CasosCovid_RM.csv",header = T, showProgress = T,data.table = T)
+
+#---- CÓMO REEMPLAZAR DATOS ----
+
+# Preguntamos cuantos casos de sexo hay y nos damos cuenta del terror y reemplazamos 
 
 casosRM[,table(Sexo)]
 casosRM[Sexo=="Fememino",Sexo:="Femenino"]
@@ -39,59 +50,68 @@ casosRM[Sexo=="Fememino",Sexo:="Femenino"]
 casosRM[`Centro de salud`=="Clínica Alemana",`Centro de salud`:="Clinica Alemana"]
 casosRM[,.N,by=.(`Centro de salud`)]
 
-# Creating (factor) variables
+# ---- CREANDO VARIABLES FACTORS (DUMMY) ----
+
+# Creating (factor) variables, estas son de tipo string que tienen leyendas, etiquetas asociados. Por ej sexo puede ser 1 y 2.  
 
 class(casosRM$Sexo)
 
-casosRM[,Sexo:=factor(Sexo)]
+casosRM[,Sexo:=factor(Sexo)] #Cambiamos el tipo de variable a factor. 
 
-head(casosRM$Sexo)
+head(casosRM$Sexo) #Los niveles que tiene ahora la variable que la pasamos a factor 
 head(as.numeric(casosRM$Sexo))
+levels(casosRM$Sexo)
 
 table(casosRM$Sexo)
-casosRM[,.N,by=.(Sexo)]
-casosRM[,.N,by=.(Sexo,`Centro de salud`)]
+casosRM[,.N,by=.(Sexo)] #Cuantos N hay por sexo 
+casosRM[,.N,by=.(Sexo,`Centro de salud`)] #Cuantos N  hay por sexo y por centro 
 
-#Collapsing by Centro de Salud 
+# 2.- Collapsing by Centro de Salud 
+
+#Agrupar las grandes categorias y sumar las observcaciones que no tiene. 
 
 names(casosRM)
-obj1<-casosRM[,.N,by=.(`Centro de salud`)]
-
+obj1<-casosRM[,.N,by=.(`Centro de salud`)] #creamos una variable que contiene agrupado todos los casos por clinica. (N es la cantidad de casos)
 
 obj1[,sum(N,na.rm = T)]
 
-obj1[,porc:=N/sum(N,na.rm = T)]
-
-# collapsing (colapsar) by average age
+obj1[,porc:=N/sum(N,na.rm = T)] #Forma de agregar nueva columna? Poporción de cosos 
 
 
-A<-casosRM[,.(AvAge=mean(Edad,na.rm = T)),by=.(`Centro de salud`)]
+# 3.- Collapsing (colapsar) by average age
 
-B<-casosRM[,.(Total_centro=.N),by=.(`Centro de salud`)]
+A<-casosRM[,.(AvAge=mean(Edad,na.rm = T)),by=.(`Centro de salud`)] #Media de edad guardada en una nueva variable por centro de salud
 
-C<-casosRM[Sexo=="Femenino",.(Total_Centro_Mujeres=.N),by=.(`Centro de salud`)]
+B<-casosRM[,.(Total_centro=.N),by=.(`Centro de salud`)] #.N es el total de casos 
+
+C<-casosRM[Sexo=="Femenino",.(Total_Centro_Mujeres=.N),by=.(`Centro de salud`)] #Aquí hay datos antes de la coma, qué segnifica? 
 
 D<-casosRM[Sexo=="Masculino",.(Total_Centro_Hombres=.N),by=.(`Centro de salud`)]
 
 dim(A)
+casosRM[,.N,by=.('Centro de salud')] # Por qué no me funciona? 
 dim(B)
 dim(C)
 dim(D)
 
+# Me salen otras dimensiones, con uno menos. Creo que es porque yo si cambie el clinica y se hizo 1. 
 
-#merging data sets
+# 4.-MERGING DATA SETS 
+
+# Vincular dos bases de datos por una varible cable. 
+
+AB<-merge(A,B,by = "Centro de salud",all = T,sort = F) #Quiero que vincule A con la base de datos B, por la columna clave centro de salud. Que se quede con todos los datos y que reorganice la base de datos eso es false. 
 
 
-AB<-merge(A,B,by = "Centro de salud",all = T,sort = F)
-
-
-ABC<-merge(AB,C,by = "Centro de salud",all = T,sort = F)
+ABC<-merge(AB,C,by = "Centro de salud",all = T,sort = F) #Generar nueva base de datos que tengo las nuevas 3 columnas.
 ABCD<-merge(ABC,D,by = "Centro de salud",all = T,sort = F)
 
 ABCD[,porc_mujeres:=Total_Centro_Mujeres/Total_centro]
 
+merge(A,)
+?by
 
-# reshaping
+# 5.- Reshaping
 
 E<-casosRM[,.(AvAge=mean(Edad,na.rm = T),`Casos confirmados`=.N),by=.(`Centro de salud`,Sexo)]
 
