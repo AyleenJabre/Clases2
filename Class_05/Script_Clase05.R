@@ -4,6 +4,7 @@
 # Fuente: https://github.com/MinCiencia/Datos-COVID19 
 
 #install.packages('sf')
+#install.packages("data.table")
 library(data.table)
 library(ggplot2)
 
@@ -11,7 +12,7 @@ covid<-fread(input ="Class_05/2020-04-08-CasosConfirmados.csv")
 str(covid)
 sapply(covid,FUN = class)
 
-covid[,`Casos Confirmados`:=as.numeric(`Casos Confirmados`)]
+covid[,`Casos Confirmados`:=as.numeric(`Casos Confirmados`)] #Transformamos lo "-" a NA 
 
 ggplot(covid, aes(x=`Casos Confirmados`)) +geom_histogram(stat = 'count')
 ggplot(covid, aes(x=`Casos Confirmados`)) +geom_histogram(stat = 'count')+ geom_density(stat = 'count')
@@ -25,13 +26,16 @@ help(package='chilemapas')
 
 comunas_rm<-mapa_comunas[mapa_comunas$codigo_region==13,]
 
-comunas_rm<-merge(comunas_rm,covid,by.x="codigo_comuna",by.y="Codigo comuna",all.x=TRUE,sort=F)
+#Se usan distintos by porque están con nombres distintos. Y el all.x es para que considere solo los datos de x, así no toma todas las comunas. 
 
+comunas_rm<-merge(x = comunas_rm,y = covid,by.x="codigo_comuna",by.y="Codigo comuna",all.x=TRUE,sort=F) 
+
+comunas_rm <- st_sf(comunas_rm) # Este paso se hace extra para cambiar el formato dado la nueva actulización. 
 
 # Choropleth plot (continuos scale)
 
 library(RColorBrewer)
-paleta <- rev(brewer.pal(n = 5,name = "Reds"))
+paleta <- rev(brewer.pal(n = 5,name = "Reds")) #usando el rev puedo invertir el degradado 
 
 p_cont<-ggplot(comunas_rm) + 
   geom_sf(aes(fill = `Casos Confirmados`, geometry = geometry)) +
@@ -41,10 +45,12 @@ p_cont<-ggplot(comunas_rm) +
 
 # Choropleth plot (Discrete scale)
 ## Fixed
-library(classInt)
+library(classInt) #Paquete ayuda a generar intervalos y tiene distitnso estilos.
 help(package='classInt')
 
-breaks_fixed <- classIntervals(comunas_rm$`Casos Confirmados`, n = 5, style = "fixed", fixedBreaks=c(min(comunas_rm$`Casos Confirmados`,na.rm = T),5,20,50,100,max(comunas_rm$`Casos Confirmados`,na.rm = T)))
+breaks_fixed <- classIntervals(comunas_rm$`Casos Confirmados`, n = 5, 
+                style = "fixed", fixedBreaks=c(min(comunas_rm$`Casos Confirmados`,na.rm = T),5,20,50,100,
+                max(comunas_rm$`Casos Confirmados`,na.rm = T))) # [inclye, excluye)
 
 comunas_rm$casos_fixed<-cut(comunas_rm$`Casos Confirmados`,breaks = breaks_fixed$brks)
 

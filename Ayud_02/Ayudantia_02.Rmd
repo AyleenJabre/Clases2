@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Introducción a data cleaning
-Para los ejercicios a continuación es necesario que tengan instalados los siguientes paquetes, que cargaremos a continuación a esta sesión:
+Para los ejercicios a continuación es necesario que tengan instalados los siguientes paquetes, que cargaremos a continuación a esta sesión:w
 
 ```{r cargando paquetes}
 library(data.table)    ## Debiese tenerlo instalado ya

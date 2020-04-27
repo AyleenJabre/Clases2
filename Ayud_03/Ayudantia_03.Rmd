@@ -19,6 +19,7 @@ month <- params$month
 Para los ejercicios a continuación es necesario que tengan descargados los siguientes paquetes:
 
 ```{r cargando paquetes, echo = FALSE}
+##install.packages("highcharter")
 library(data.table)    ## Este debiese de tenerlo instalado desde la ayudantía 01
 library(ggplot2)       ## Este debiese de tenerlo instalado desde la clase 02
 library(highcharter)

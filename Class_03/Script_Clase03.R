@@ -71,11 +71,11 @@ casosRM[,.N,by=.(Sexo,`Centro de salud`)] #Cuantos N  hay por sexo y por centro
 #Agrupar las grandes categorias y sumar las observcaciones que no tiene. 
 
 names(casosRM)
-obj1<-casosRM[,.N,by=.(`Centro de salud`)] #creamos una variable que contiene agrupado todos los casos por clinica. (N es la cantidad de casos)
+obj1<-casosRM[,.N,by=.(`Centro de salud`)] #creamos una variable que contiene agrupado todos los casos por clinica. (N es la cantidad de casos), se pone con un punto antes para que tome como lista
 
 obj1[,sum(N,na.rm = T)]
 
-obj1[,porc:=N/sum(N,na.rm = T)] #Forma de agregar nueva columna? Poporción de cosos 
+obj1[,porc:=N/sum(N,na.rm = T)] #Forma de agregar nueva columna? Poporción de cosos. Por qué aquí el N va sin .? 
 
 
 # 3.- Collapsing (colapsar) by average age
